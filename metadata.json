@@ -1,0 +1,8 @@
+{
+  "name": "Preschool Student Management System",
+  "description": "A comprehensive, high-fidelity ERP for preschool administration featuring role-based dashboards, admission management, student tracking, attendance calendars, fee collection, and server-side Gemini AI performance analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
