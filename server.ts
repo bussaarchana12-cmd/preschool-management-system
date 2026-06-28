@@ -4,7 +4,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const DB_FILE = path.join(process.cwd(), "db.json");
 
 // Helper to initialize Gemini client lazily
@@ -400,6 +400,17 @@ function saveDB() {
 // REST API Definition
 const app = express();
 app.use(express.json({ limit: "50mb" })); // Increase limit for photo uploads in base64
+
+// Enable CORS for frontend requests (e.g. from GitHub Pages)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // Authentication & Login Simulate
 app.post("/api/auth/login", (req, res) => {
