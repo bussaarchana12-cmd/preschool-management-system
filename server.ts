@@ -28,8 +28,8 @@ function getGeminiClient() {
 }
 
 // Ensure database file exists with seed data
-function initDatabase() {
-  if (fs.existsSync(DB_FILE)) {
+function initDatabase(forceRecreate = false) {
+  if (!forceRecreate && fs.existsSync(DB_FILE)) {
     try {
       const data = fs.readFileSync(DB_FILE, "utf-8");
       if (data.trim().length > 0) {
@@ -966,6 +966,254 @@ app.put("/api/notifications/read-all", (req, res) => {
 // Activity Logs
 app.get("/api/activity-logs", (req, res) => {
   res.json(db.activityLogs);
+});
+
+app.post("/api/activity-logs", (req, res) => {
+  const { userName, role, action, category, details } = req.body;
+  if (!userName || !role || !action || !category) {
+    return res.status(400).json({ error: "Missing required activity log fields" });
+  }
+  const newLog = {
+    id: `log-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    userId: `user-${Date.now()}`,
+    userName,
+    role,
+    action,
+    category,
+    details: details || ""
+  };
+  db.activityLogs.unshift(newLog);
+  saveDB();
+  res.status(201).json(newLog);
+});
+
+// System control endpoints for resetting and seeding mock data
+app.post("/api/system/reset-mock", (req, res) => {
+  try {
+    const seed = initDatabase(true);
+    // Clear current db fields and reassign from seed
+    Object.keys(db).forEach(k => delete (db as any)[k]);
+    Object.assign(db, seed);
+    res.json({ message: "Database reset to initial seed values successfully." });
+  } catch (err: any) {
+    console.error("Database reset failed:", err);
+    res.status(500).json({ error: "Reset failed: " + err.message });
+  }
+});
+
+app.post("/api/system/generate-mock", (req, res) => {
+  try {
+    const firstNames = ["Kabir", "Ananya", "Rohan", "Ishani", "Zoya", "Advait", "Sanya", "Arjun", "Zara", "Aarush"];
+    const lastNames = ["Kapoor", "Roy", "Sharma", "Nair", "Mehta", "Deshmukh", "Gupta", "Joshi", "Verma", "Malhotra"];
+    const parentOccupations = ["Consultant", "Doctor", "Engineer", "Designer", "Architect", "Manager", "Business Owner", "Teacher"];
+    const allergiesList = ["None", "Peanuts", "Gluten", "Dairy", "Eggs", "Strawberries"];
+    const relations = ["Uncle", "Aunt", "Grandfather", "Grandmother", "Driver"];
+
+    const mockLogTemplates = [
+      { action: "User Login", category: "System", details: "Staff logged in from IP 192.168.1.56" },
+      { action: "Updated Attendance Register", category: "Attendance", details: "Attendance marked for Play Group Class" },
+      { action: "Processed Term Fee Payment", category: "Fees", details: "Processed school fees payment transaction" },
+      { action: "Approved ERP Admission", category: "Admission", details: "Reviewed and approved applicant registration dossier" },
+      { action: "Created Homework Assignment", category: "Homework", details: "A new homework packet was published" },
+      { action: "Graded Homework Submission", category: "Homework", details: "Teacher evaluated homework submission" },
+      { action: "Uploaded Medical Immunization Doc", category: "Student", details: "Updated medical vaccination ledger" },
+      { action: "System Configuration Updated", category: "Settings", details: "Academic Timetable and class settings updated by Admin" },
+      { action: "Generated AI Student Summary", category: "Student", details: "Generated AI child developmental progress insights" },
+      { action: "Broadcasted Announcement", category: "System", details: "Broadcasted 'School Holiday Notice' to parents" }
+    ];
+
+    const randomUsers = [
+      { name: "Anil Verma", role: "Admin", id: "user-admin" },
+      { name: "Ms. Sarah Jenkins", role: "Teacher", id: "user-teacher1" },
+      { name: "Mrs. Meera Patel", role: "Teacher", id: "user-teacher2" },
+      { name: "Tina Sen", role: "Receptionist", id: "user-receptionist" },
+      { name: "Sanjay Gupta", role: "Accountant", id: "user-accountant" },
+      { name: "Dr. Sunita Sharma", role: "Super Admin", id: "user-super" }
+    ];
+
+    const generatedStudents = [];
+    const generatedLogs = [];
+
+    // Generate 5 random students
+    for (let i = 0; i < 5; i++) {
+      const fName = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const lName = lastNames[Math.floor(Math.random() * lastNames.length)];
+      const name = `${fName} ${lName}`;
+      const gender = Math.random() > 0.5 ? "Male" : "Female";
+      const randomClass = db.classes[Math.floor(Math.random() * db.classes.length)];
+      const classId = randomClass.id;
+      
+      const studentId = `student-mock-${Date.now()}-${i}`;
+      const rollNumber = String(db.students.filter((s: any) => s.classId === classId).length + 1).padStart(2, "0");
+      const admNumber = `ADM2026${String(db.students.length + i + 10).padStart(3, "0")}`;
+      
+      const fatherName = `${fName} ${lName}'s Father`;
+      const motherName = `${fName} ${lName}'s Mother`;
+      
+      const newStudent = {
+        id: studentId,
+        admissionNumber: admNumber,
+        rollNumber,
+        name,
+        dob: `2023-0${Math.floor(Math.random() * 8) + 1}-${Math.floor(Math.random() * 20) + 10}`,
+        gender,
+        classId,
+        status: "Enrolled",
+        parentDetails: {
+          fatherName,
+          fatherPhone: `+91 98765 ${Math.floor(Math.random() * 90000) + 10000}`,
+          fatherEmail: `${fName.toLowerCase()}@example.com`,
+          fatherOccupation: parentOccupations[Math.floor(Math.random() * parentOccupations.length)],
+          motherName,
+          motherPhone: `+91 98765 ${Math.floor(Math.random() * 90000) + 10000}`,
+          motherEmail: `${lName.toLowerCase()}@example.com`,
+          motherOccupation: parentOccupations[Math.floor(Math.random() * parentOccupations.length)],
+          address: `${Math.floor(Math.random() * 500) + 1}, Garden Heights, Sector 15, Pune, India`
+        },
+        medicalRecord: {
+          bloodGroup: ["A+", "B+", "O+", "AB+"][Math.floor(Math.random() * 4)],
+          allergies: Math.random() > 0.7 ? [allergiesList[Math.floor(Math.random() * (allergiesList.length - 1)) + 1]] : ["None"],
+          medicalConditions: ["None"],
+          vaccinations: [
+            { name: "BCG", status: "Completed" },
+            { name: "Hepatitis B", status: "Completed" },
+            { name: "DPT", status: "Completed" },
+            { name: "MMR", status: "Completed" }
+          ],
+          pediatricianName: "Dr. Alok Sen",
+          pediatricianPhone: "+91 98222 12345"
+        },
+        emergencyContact: {
+          name: fatherName,
+          relation: "Father",
+          phone: `+91 98765 ${Math.floor(Math.random() * 90000) + 10000}`
+        },
+        pickupPersons: [
+          {
+            name: `Aunt ${fName}`,
+            relation: relations[Math.floor(Math.random() * relations.length)],
+            phone: `+91 98230 ${Math.floor(Math.random() * 90000) + 10000}`
+          }
+        ],
+        transportRequired: Math.random() > 0.5,
+        previousSchool: "None",
+        achievements: ["Active Participant", "Star of the Day"],
+        remarks: ["Delightful child, adapts quickly to preschool circle time."],
+        timeline: [
+          { date: "2026-06-01", title: "Enrolled", description: `Enrolled in ${randomClass.name} Class`, type: "system" }
+        ]
+      };
+      
+      db.students.push(newStudent);
+      generatedStudents.push(newStudent);
+
+      // Generate corresponding Fee Record
+      const feeRecord = {
+        id: `fee-mock-${Date.now()}-${i}`,
+        studentId,
+        academicYear: "2026-27",
+        term: "Term 1" as const,
+        baseFee: 25000,
+        transportFee: newStudent.transportRequired ? 3500 : 0,
+        daycareFee: randomClass.id === "class-5" ? 12000 : 0,
+        discount: Math.random() > 0.8 ? 2000 : 0,
+        lateFee: 0,
+        paidAmount: Math.random() > 0.3 ? (Math.random() > 0.5 ? 25000 : 12000) : 0,
+        status: "Unpaid" as "Paid" | "Partial" | "Unpaid",
+        paymentHistory: [] as any[]
+      };
+      const totalFee = feeRecord.baseFee + feeRecord.transportFee + feeRecord.daycareFee - feeRecord.discount;
+      if (feeRecord.paidAmount >= totalFee) {
+        feeRecord.paidAmount = totalFee;
+        feeRecord.status = "Paid" as const;
+        feeRecord.paymentHistory.push({
+          id: `pay-mock-${Date.now()}-${i}`,
+          amount: totalFee,
+          paymentDate: "2026-06-15",
+          paymentMode: "UPI" as const,
+          receiptNumber: `RCP2026M0${i}`,
+          receivedBy: "Tina Sen"
+        });
+      } else if (feeRecord.paidAmount > 0) {
+        feeRecord.status = "Partial" as const;
+        feeRecord.paymentHistory.push({
+          id: `pay-mock-${Date.now()}-${i}`,
+          amount: feeRecord.paidAmount,
+          paymentDate: "2026-06-18",
+          paymentMode: "Cash" as const,
+          receiptNumber: `RCP2026M0${i}`,
+          receivedBy: "Sanjay Gupta"
+        });
+      }
+      db.fees.push(feeRecord);
+
+      // Generate 2 attendance records for this student
+      db.attendance.push({
+        id: `att-mock-${Date.now()}-${i}-1`,
+        date: "2026-06-25",
+        studentId,
+        status: Math.random() > 0.1 ? "Present" : "Leave",
+        markedBy: "Ms. Sarah Jenkins",
+        behaviour: "Excellent",
+        health: "Healthy"
+      });
+      db.attendance.push({
+        id: `att-mock-${Date.now()}-${i}-2`,
+        date: "2026-06-26",
+        studentId,
+        status: Math.random() > 0.15 ? "Present" : "Leave",
+        markedBy: "Ms. Sarah Jenkins",
+        behaviour: "Cooperative",
+        health: "Healthy"
+      });
+    }
+
+    // Generate 15 diverse activity history logs
+    for (let i = 0; i < 15; i++) {
+      const template = mockLogTemplates[Math.floor(Math.random() * mockLogTemplates.length)];
+      const u = randomUsers[Math.floor(Math.random() * randomUsers.length)];
+      
+      const daysAgo = Math.floor(Math.random() * 12);
+      const hoursAgo = Math.floor(Math.random() * 24);
+      const minsAgo = Math.floor(Math.random() * 60);
+      const date = new Date();
+      date.setDate(date.getDate() - daysAgo);
+      date.setHours(date.getHours() - hoursAgo);
+      date.setMinutes(date.getMinutes() - minsAgo);
+
+      let customDetails = template.details;
+      if (template.category === "Student" && generatedStudents.length > 0) {
+        const randomSt = generatedStudents[Math.floor(Math.random() * generatedStudents.length)];
+        customDetails += ` for student: ${randomSt.name}`;
+      }
+
+      generatedLogs.push({
+        id: `log-mock-${Date.now()}-${i}`,
+        timestamp: date.toISOString(),
+        userId: u.id,
+        userName: u.name,
+        role: u.role,
+        action: template.action,
+        category: template.category,
+        details: customDetails
+      });
+    }
+
+    db.activityLogs.unshift(...generatedLogs);
+    // Sort activity logs by timestamp descending
+    db.activityLogs.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    saveDB();
+
+    res.json({
+      message: "Mock data seeded successfully!",
+      studentsAddedCount: generatedStudents.length,
+      logsAddedCount: generatedLogs.length
+    });
+  } catch (err: any) {
+    console.error("Mock data generation failed:", err);
+    res.status(500).json({ error: "Failed to generate mock data: " + err.message });
+  }
 });
 
 // Settings API

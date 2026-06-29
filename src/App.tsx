@@ -32,7 +32,9 @@ import {
   FileSpreadsheet,
   Trash2,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  History,
+  Database
 } from "lucide-react";
 
 export default function App() {
@@ -121,6 +123,19 @@ export default function App() {
   const [announcementTitle, setAnnouncementTitle] = useState("");
   const [announcementMsg, setAnnouncementMsg] = useState("");
 
+  // History and Mocking states
+  const [historySearchQuery, setHistorySearchQuery] = useState("");
+  const [historyCategoryFilter, setHistoryCategoryFilter] = useState("all");
+  const [historyRoleFilter, setHistoryRoleFilter] = useState("all");
+  const [customLogUserName, setCustomLogUserName] = useState("");
+  const [customLogRole, setCustomLogRole] = useState<Role>(Role.ADMIN);
+  const [customLogAction, setCustomLogAction] = useState("");
+  const [customLogCategory, setCustomLogCategory] = useState("System");
+  const [customLogDetails, setCustomLogDetails] = useState("");
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [isAddingLog, setIsAddingLog] = useState(false);
+
   // Load user session on boot
   useEffect(() => {
     const savedUser = localStorage.getItem("intellitots_user");
@@ -135,6 +150,8 @@ export default function App() {
   useEffect(() => {
     if (user) {
       fetchAllCollections();
+      setCustomLogUserName(user.name);
+      setCustomLogRole(user.role);
     }
   }, [user]);
 
@@ -533,6 +550,92 @@ export default function App() {
     }
   };
 
+  const handleResetDatabase = async () => {
+    if (!confirm("Are you sure you want to completely reset the ERP database to default seed values? All custom entries will be lost.")) return;
+    setIsResetting(true);
+    try {
+      const response = await fetch("/api/system/reset-mock", { method: "POST" });
+      if (response.ok) {
+        alert("Database successfully reset to initial seed values!");
+        await fetchAllCollections();
+      } else {
+        alert("Failed to reset database.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error occurred while resetting database.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleGenerateMockData = async () => {
+    setIsSeeding(true);
+    try {
+      const response = await fetch("/api/system/generate-mock", { method: "POST" });
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Successfully generated mock data!\nAdded ${data.studentsAddedCount} Students and ${data.logsAddedCount} Audit Logs.`);
+        await fetchAllCollections();
+      } else {
+        alert("Failed to generate mock data.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error occurred while generating mock data.");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handleCreateCustomLog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customLogAction.trim() || !customLogCategory || !customLogUserName.trim()) {
+      alert("Please fill in all required log fields.");
+      return;
+    }
+    setIsAddingLog(true);
+    try {
+      const response = await fetch("/api/activity-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userName: customLogUserName,
+          role: customLogRole,
+          action: customLogAction,
+          category: customLogCategory,
+          details: customLogDetails
+        })
+      });
+      if (response.ok) {
+        setCustomLogAction("");
+        setCustomLogDetails("");
+        await fetchAllCollections();
+      } else {
+        alert("Failed to record custom log.");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAddingLog(false);
+    }
+  };
+
+  const handleExportHistoryCSV = (logsToExport: ActivityLog[]) => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Timestamp,User Name,Role,Category,Action,Details\n";
+    logsToExport.forEach((log) => {
+      csvContent += `"${log.timestamp}","${log.userName}","${log.role}","${log.category}","${log.action}","${log.details || ""}"\n`;
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `erp_audit_history_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Local helper calculations
   const totalStudentsCount = students.length;
   const activeStudentsCount = students.filter(s => s.status === "Enrolled").length;
@@ -758,6 +861,15 @@ export default function App() {
               >
                 <Settings className={`w-4 h-4 ${activeTab === "settings" ? "text-indigo-600" : "text-slate-400"}`} />
                 System Settings
+              </button>
+              <button
+                onClick={() => { setActiveTab("history"); setSelectedStudent(null); }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium font-display transition-all text-left cursor-pointer ${
+                  activeTab === "history" ? "bg-indigo-50 text-indigo-700 font-bold" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+              >
+                <History className={`w-4 h-4 ${activeTab === "history" ? "text-indigo-600" : "text-slate-400"}`} />
+                Audit Logs & Mocking
               </button>
             </div>
           )}
@@ -2143,6 +2255,339 @@ export default function App() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 11: Audit Logs & Mocking Control */}
+          {activeTab === "history" && (
+            <div className="flex flex-col gap-6 animate-fade-in">
+              {/* Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 font-display uppercase tracking-wider flex items-center gap-2">
+                    <History className="w-5.5 h-5.5 text-indigo-600" />
+                    ERP Security Activity & Data Control
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Monitor system audit logs, export security history, and generate mock data profiles for sandbox testing.
+                  </p>
+                </div>
+              </div>
+
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Total Activity Logs</span>
+                  <div className="flex justify-between items-end mt-2">
+                    <span className="text-2xl font-black text-slate-800 font-display">{activityLogs.length}</span>
+                    <History className="w-5 h-5 text-indigo-500 mb-1" />
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Student Directory</span>
+                  <div className="flex justify-between items-end mt-2">
+                    <span className="text-2xl font-black text-slate-800 font-display">{students.length}</span>
+                    <Users className="w-5 h-5 text-amber-500 mb-1" />
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Preschool Classrooms</span>
+                  <div className="flex justify-between items-end mt-2">
+                    <span className="text-2xl font-black text-slate-800 font-display">{classes.length}</span>
+                    <Building className="w-5 h-5 text-emerald-500 mb-1" />
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">System State</span>
+                  <div className="flex justify-between items-end mt-2">
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mb-1">
+                      Online & Healthy
+                    </span>
+                    <Database className="w-5 h-5 text-blue-500 mb-1" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Seeder Card */}
+                <div className="lg:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
+                  <h3 className="font-bold text-slate-900 text-sm font-display uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                    <Database className="w-4.5 h-4.5 text-indigo-500" />
+                    ERP Sandbox Seeding
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Seed batch profiles (students, classes, and logs) to preview dashboard charts, attendance lists, and report cards.
+                  </p>
+
+                  <div className="flex flex-col gap-2 mt-2">
+                    <button
+                      onClick={handleGenerateMockData}
+                      disabled={isSeeding || isResetting}
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-xs hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 transition-all cursor-pointer shadow-sm"
+                    >
+                      {isSeeding ? (
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      ) : (
+                        <Plus className="w-4 h-4 text-amber-300" />
+                      )}
+                      Populate Mock Data
+                    </button>
+
+                    <button
+                      onClick={handleResetDatabase}
+                      disabled={isSeeding || isResetting}
+                      className="w-full flex items-center justify-center gap-2 py-3 border border-slate-200 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-50 disabled:opacity-50 transition-all cursor-pointer"
+                    >
+                      {isResetting ? (
+                        <span className="w-4 h-4 border-2 border-slate-600 border-t-transparent rounded-full animate-spin"></span>
+                      ) : (
+                        <Trash2 className="w-4 h-4 text-rose-500" />
+                      )}
+                      Reset ERP Database
+                    </button>
+                  </div>
+                </div>
+
+                {/* Form to insert custom log entry */}
+                <form onSubmit={handleCreateCustomLog} className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
+                  <h3 className="font-bold text-slate-900 text-sm font-display uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-3">
+                    <Plus className="w-4.5 h-4.5 text-indigo-500" />
+                    Create Custom Security Audit Log
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-semibold text-slate-500">Staff Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={customLogUserName}
+                        onChange={(e) => setCustomLogUserName(e.target.value)}
+                        placeholder="e.g. Ms. Sarah Jenkins"
+                        className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-semibold text-slate-500">Security Role</label>
+                      <select
+                        value={customLogRole}
+                        onChange={(e) => setCustomLogRole(e.target.value as Role)}
+                        className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl outline-none font-medium text-slate-700"
+                      >
+                        {Object.values(Role).map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-semibold text-slate-500">Activity Category</label>
+                      <select
+                        value={customLogCategory}
+                        onChange={(e) => setCustomLogCategory(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl outline-none text-slate-700"
+                      >
+                        <option value="System">System Security</option>
+                        <option value="Student">Student Management</option>
+                        <option value="Admission">Admission Queue</option>
+                        <option value="Attendance">Daily Attendance</option>
+                        <option value="Fees">Fees & Finances</option>
+                        <option value="Homework">Homework Assignments</option>
+                        <option value="Settings">General Settings</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-semibold text-slate-500">Triggered Action</label>
+                      <input
+                        type="text"
+                        required
+                        value={customLogAction}
+                        onChange={(e) => setCustomLogAction(e.target.value)}
+                        placeholder="e.g. Cleared pending fee, Approved document verification"
+                        className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl outline-none"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 flex flex-col gap-1">
+                      <label className="font-semibold text-slate-500">Action Technical Details</label>
+                      <input
+                        type="text"
+                        value={customLogDetails}
+                        onChange={(e) => setCustomLogDetails(e.target.value)}
+                        placeholder="e.g. Logged in from Pune Office IP 192.168.1.100"
+                        className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end mt-2">
+                    <button
+                      type="submit"
+                      disabled={isAddingLog}
+                      className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      {isAddingLog ? (
+                        <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      ) : (
+                        <Send className="w-3.5 h-3.5 text-amber-400" />
+                      )}
+                      Record Event Log
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Logs Audit History List */}
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm font-display uppercase tracking-wider">ERP System Logs Archive</h3>
+                    <p className="text-xs text-slate-500">Total filter-matched audit events listed chronologically.</p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const matched = activityLogs.filter((log) => {
+                        const matchesSearch =
+                          log.userName.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
+                          log.action.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
+                          log.details.toLowerCase().includes(historySearchQuery.toLowerCase());
+                        const matchesCategory = historyCategoryFilter === "all" || log.category === historyCategoryFilter;
+                        const matchesRole = historyRoleFilter === "all" || log.role === historyRoleFilter;
+                        return matchesSearch && matchesCategory && matchesRole;
+                      });
+                      handleExportHistoryCSV(matched);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 text-slate-600 rounded-xl text-xs hover:bg-slate-50 font-bold transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-slate-400" />
+                    Export History (CSV)
+                  </button>
+                </div>
+
+                {/* Toolbar */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={historySearchQuery}
+                      onChange={(e) => setHistorySearchQuery(e.target.value)}
+                      placeholder="Search users, actions, details..."
+                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-400 pl-9 pr-4 py-2 rounded-xl text-xs outline-none transition-all text-slate-800 font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <select
+                      value={historyCategoryFilter}
+                      onChange={(e) => setHistoryCategoryFilter(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-400 px-3 py-2 rounded-xl text-xs outline-none text-slate-600 font-medium"
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="System">System Security</option>
+                      <option value="Student">Student Management</option>
+                      <option value="Admission">Admission Queue</option>
+                      <option value="Attendance">Daily Attendance</option>
+                      <option value="Fees">Fees & Finances</option>
+                      <option value="Homework">Homework Assignments</option>
+                      <option value="Settings">General Settings</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <select
+                      value={historyRoleFilter}
+                      onChange={(e) => setHistoryRoleFilter(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-400 px-3 py-2 rounded-xl text-xs outline-none text-slate-600 font-medium"
+                    >
+                      <option value="all">All Roles</option>
+                      {Object.values(Role).map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* List Table */}
+                <div className="overflow-x-auto mt-2">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-slate-50 border-b border-slate-100 font-bold text-slate-400 uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="px-4 py-3">Timestamp</th>
+                        <th className="px-4 py-3">Staff Identity</th>
+                        <th className="px-4 py-3">ERP Module</th>
+                        <th className="px-4 py-3">Action Description</th>
+                        <th className="px-4 py-3">Technical Details</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {activityLogs
+                        .filter((log) => {
+                          const matchesSearch =
+                            log.userName.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
+                            log.action.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
+                            log.details.toLowerCase().includes(historySearchQuery.toLowerCase());
+                          const matchesCategory = historyCategoryFilter === "all" || log.category === historyCategoryFilter;
+                          const matchesRole = historyRoleFilter === "all" || log.role === historyRoleFilter;
+                          return matchesSearch && matchesCategory && matchesRole;
+                        })
+                        .map((log) => {
+                          let catColor = "bg-slate-100 text-slate-600";
+                          if (log.category === "System") catColor = "bg-indigo-50 text-indigo-700";
+                          else if (log.category === "Student") catColor = "bg-sky-50 text-sky-700";
+                          else if (log.category === "Admission") catColor = "bg-amber-50 text-amber-700";
+                          else if (log.category === "Attendance") catColor = "bg-teal-50 text-teal-700";
+                          else if (log.category === "Fees") catColor = "bg-emerald-50 text-emerald-700";
+                          else if (log.category === "Homework") catColor = "bg-pink-50 text-pink-700";
+                          else if (log.category === "Settings") catColor = "bg-purple-50 text-purple-700";
+
+                          return (
+                            <tr key={log.id} className="hover:bg-slate-50/50">
+                              <td className="px-4 py-3.5 font-mono text-slate-400 text-[10px]">
+                                {new Date(log.timestamp).toLocaleString()}
+                              </td>
+                              <td className="px-4 py-3.5">
+                                <span className="font-bold text-slate-800 block">{log.userName}</span>
+                                <span className="text-[9px] uppercase font-extrabold tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full inline-block mt-0.5">
+                                  {log.role}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3.5">
+                                <span className={`px-2 py-0.5 rounded font-semibold text-[10px] inline-block ${catColor}`}>
+                                  {log.category}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3.5 font-bold text-slate-800">
+                                {log.action}
+                              </td>
+                              <td className="px-4 py-3.5 text-slate-500 font-medium max-w-xs truncate" title={log.details}>
+                                {log.details}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      {activityLogs.filter((log) => {
+                        const matchesSearch =
+                          log.userName.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
+                          log.action.toLowerCase().includes(historySearchQuery.toLowerCase()) ||
+                          log.details.toLowerCase().includes(historySearchQuery.toLowerCase());
+                        const matchesCategory = historyCategoryFilter === "all" || log.category === historyCategoryFilter;
+                        const matchesRole = historyRoleFilter === "all" || log.role === historyRoleFilter;
+                        return matchesSearch && matchesCategory && matchesRole;
+                      }).length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-8 text-center text-slate-400 font-semibold">
+                            No history records match current search or filters.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
