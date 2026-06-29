@@ -46,8 +46,7 @@ function initDatabase(forceRecreate = false) {
       { id: "class-1", name: "Play Group", capacity: 15, roomNumber: "101", teacherId: "teacher-1", assistantTeacherName: "Ms. Tina Verma", status: "Active" },
       { id: "class-2", name: "Nursery", capacity: 20, roomNumber: "102", teacherId: "teacher-2", assistantTeacherName: "Mrs. Shweta Rai", status: "Active" },
       { id: "class-3", name: "Junior KG", capacity: 20, roomNumber: "103", teacherId: "teacher-3", assistantTeacherName: "Miss Pooja Hegde", status: "Active" },
-      { id: "class-4", name: "Senior KG", capacity: 20, roomNumber: "104", teacherId: "teacher-4", assistantTeacherName: "Mrs. Clara Gomez", status: "Active" },
-      { id: "class-5", name: "Day Care", capacity: 15, roomNumber: "105", teacherId: "teacher-1", assistantTeacherName: "Ms. Tina Verma", status: "Active" }
+      { id: "class-4", name: "Senior KG", capacity: 20, roomNumber: "104", teacherId: "teacher-4", assistantTeacherName: "Mrs. Clara Gomez", status: "Active" }
     ],
     users: [
       { id: "user-super", email: "superadmin@school.com", name: "Dr. Sunita Sharma", role: "Super Admin", phone: "+91 98765 43210" },
@@ -60,7 +59,7 @@ function initDatabase(forceRecreate = false) {
       { id: "user-accountant", email: "accountant@school.com", name: "Sanjay Gupta", role: "Accountant", phone: "+91 98765 77777" }
     ],
     teachers: [
-      { id: "teacher-1", userId: "user-teacher1", name: "Ms. Sarah Jenkins", email: "teacher1@school.com", phone: "+91 98765 33333", qualification: "B.Ed, Early Childhood Education", joiningDate: "2024-06-15", assignedClassIds: ["class-1", "class-5"], status: "Active" },
+      { id: "teacher-1", userId: "user-teacher1", name: "Ms. Sarah Jenkins", email: "teacher1@school.com", phone: "+91 98765 33333", qualification: "B.Ed, Early Childhood Education", joiningDate: "2024-06-15", assignedClassIds: ["class-1"], status: "Active" },
       { id: "teacher-2", userId: "user-teacher2", name: "Mrs. Meera Patel", email: "teacher2@school.com", phone: "+91 98765 44444", qualification: "M.A. Child Psychology, Montessori Trained", joiningDate: "2023-01-10", assignedClassIds: ["class-2"], status: "Active" },
       { id: "teacher-3", userId: "user-teacher3", name: "Ms. Priya Sharma", email: "teacher3@school.com", phone: "+91 98765 12345", qualification: "B.A. English, Montessori Certified", joiningDate: "2025-02-01", assignedClassIds: ["class-3"], status: "Active" },
       { id: "teacher-4", userId: "user-teacher4", name: "Mrs. Evelyn Carter", email: "principal@school.com", phone: "+91 98765 22222", qualification: "Ph.D in Education Administration", joiningDate: "2022-08-15", assignedClassIds: ["class-4"], status: "Active" }
@@ -386,6 +385,152 @@ function initDatabase(forceRecreate = false) {
       { id: "log-2", timestamp: "2026-06-26T10:00:00Z", userId: "user-admin", userName: "Anil Verma", role: "Admin", action: "Approved Admission", category: "Admission", details: "Approved admission application ADM2026001 for Aarav Malhotra" }
     ]
   };
+
+  // Programmatically generate 16 more students to reach exactly 20 students total
+  const remainingStudents = [
+    { id: "student-5", name: "Vivaan Iyer", gender: "Male" as const, dob: "2023-08-11", classId: "class-1", parentFather: "Venkatesh Iyer", parentMother: "Anjali Iyer", blood: "AB+", allergy: "Egg" },
+    { id: "student-6", name: "Kiara Advani", gender: "Female" as const, dob: "2022-12-04", classId: "class-2", parentFather: "Rohan Advani", parentMother: "Sonia Advani", blood: "O+", allergy: "Dust" },
+    { id: "student-7", name: "Rohan Mehta", gender: "Male" as const, dob: "2022-05-15", classId: "class-2", parentFather: "Suresh Mehta", parentMother: "Komal Mehta", blood: "A+", allergy: "None" },
+    { id: "student-8", name: "Ananya Sen", gender: "Female" as const, dob: "2022-09-18", classId: "class-2", parentFather: "Arijit Sen", parentMother: "Rita Sen", blood: "B+", allergy: "Milk" },
+    { id: "student-9", name: "Ishaan Roy", gender: "Male" as const, dob: "2021-03-22", classId: "class-3", parentFather: "Dinesh Roy", parentMother: "Preeti Roy", blood: "O-", allergy: "None" },
+    { id: "student-10", name: "Zara Hegde", gender: "Female" as const, dob: "2021-07-30", classId: "class-3", parentFather: "Vikram Hegde", parentMother: "Nandini Hegde", blood: "A-", allergy: "Strawberries" },
+    { id: "student-11", name: "Aditya Joshi", gender: "Male" as const, dob: "2020-04-14", classId: "class-4", parentFather: "Hemant Joshi", parentMother: "Sushma Joshi", blood: "AB-", allergy: "None" },
+    { id: "student-12", name: "Diya Malhotra", gender: "Female" as const, dob: "2020-08-25", classId: "class-4", parentFather: "Rajesh Malhotra", parentMother: "Shweta Malhotra", blood: "O+", allergy: "None" },
+    { id: "student-13", name: "Kabir Roy", gender: "Male" as const, dob: "2023-10-05", classId: "class-1", parentFather: "Dinesh Roy", parentMother: "Preeti Roy", blood: "A+", allergy: "None" },
+    { id: "student-14", name: "Sanya Gupta", gender: "Female" as const, dob: "2022-11-20", classId: "class-2", parentFather: "Nitin Gupta", parentMother: "Rashmi Gupta", blood: "B-", allergy: "Gluten" },
+    { id: "student-15", name: "Advait Nair", gender: "Male" as const, dob: "2022-02-12", classId: "class-2", parentFather: "Madhavan Nair", parentMother: "Shalini Nair", blood: "AB+", allergy: "None" },
+    { id: "student-16", name: "Zara Mirza", gender: "Female" as const, dob: "2021-06-05", classId: "class-3", parentFather: "Farhan Mirza", parentMother: "Ayesha Mirza", blood: "O+", allergy: "None" },
+    { id: "student-17", name: "Arjun Sharma", gender: "Male" as const, dob: "2021-12-19", classId: "class-3", parentFather: "Amit Sharma", parentMother: "Kavita Sharma", blood: "B+", allergy: "None" },
+    { id: "student-18", name: "Arya Kulkarni", gender: "Female" as const, dob: "2020-01-20", classId: "class-4", parentFather: "Sanjay Kulkarni", parentMother: "Deepa Kulkarni", blood: "A+", allergy: "None" },
+    { id: "student-19", name: "Reyansh Deshmukh", gender: "Male" as const, dob: "2020-05-30", classId: "class-4", parentFather: "Anil Deshmukh", parentMother: "Prachi Deshmukh", blood: "O-", allergy: "None" },
+    { id: "student-20", name: "Myra Goel", gender: "Female" as const, dob: "2023-01-14", classId: "class-1", parentFather: "Pankaj Goel", parentMother: "Nidhi Goel", blood: "AB+", allergy: "None" }
+  ];
+
+  remainingStudents.forEach((ms, idx) => {
+    const classCount = seed.students.filter((s: any) => s.classId === ms.classId).length + 1;
+    const rollNumber = String(classCount).padStart(2, "0");
+    const admissionNumber = `ADM2026${String(idx + 5).padStart(3, "0")}`;
+
+    const studentObj = {
+      id: ms.id,
+      admissionNumber,
+      rollNumber,
+      name: ms.name,
+      dob: ms.dob,
+      gender: ms.gender,
+      classId: ms.classId,
+      status: "Enrolled" as const,
+      parentDetails: {
+        fatherName: ms.parentFather,
+        fatherPhone: `+91 98765 ${Math.floor(Math.random() * 90000) + 10000}`,
+        fatherEmail: `${ms.parentFather.toLowerCase().replace(/\s/g, "")}@school.com`,
+        fatherOccupation: ["Engineer", "Consultant", "Physician", "Designer", "Business Owner"][idx % 5],
+        motherName: ms.parentMother,
+        motherPhone: `+91 98765 ${Math.floor(Math.random() * 90000) + 10000}`,
+        motherEmail: `${ms.parentMother.toLowerCase().replace(/\s/g, "")}@gmail.com`,
+        motherOccupation: ["Homemaker", "Teacher", "Artist", "Manager", "Writer"][idx % 5],
+        address: `${100 + idx * 7}, Harmony Apartments, Kalyani Nagar, Pune, India`
+      },
+      medicalRecord: {
+        bloodGroup: ms.blood,
+        allergies: ms.allergy !== "None" ? [ms.allergy] : ["None"],
+        medicalConditions: ["None"],
+        vaccinations: [
+          { name: "BCG", status: "Completed" as const },
+          { name: "Hepatitis B", status: "Completed" as const },
+          { name: "DPT", status: "Completed" as const },
+          { name: "MMR", status: "Completed" as const }
+        ],
+        pediatricianName: "Dr. Alok Sen",
+        pediatricianPhone: "+91 98222 12345"
+      },
+      emergencyContact: {
+        name: ms.parentFather,
+        relation: "Father",
+        phone: `+91 98765 ${Math.floor(Math.random() * 90000) + 10000}`
+      },
+      pickupPersons: [
+        { name: `Uncle of ${ms.name.split(" ")[0]}`, relation: "Uncle", phone: `+91 98230 ${Math.floor(Math.random() * 90000) + 10000}` }
+      ],
+      transportRequired: idx % 2 === 0,
+      previousSchool: "None",
+      achievements: ["Active Participation"],
+      remarks: ["Delightful and independent toddler."],
+      timeline: [
+        { date: "2026-06-01", title: "Enrolled", description: `Joined school in academic year 2026-27`, type: "system" }
+      ]
+    };
+    seed.students.push(studentObj);
+
+    // Generate corresponding Fee Record
+    const baseFee = 25000;
+    const transportFee = studentObj.transportRequired ? 3500 : 0;
+    const discount = idx % 3 === 0 ? 2000 : 0;
+    const totalFee = baseFee + transportFee - discount;
+    
+    let paidAmount = 0;
+    let status: "Paid" | "Partial" | "Unpaid" = "Unpaid";
+    const paymentHistory = [];
+    if (idx % 3 === 0) {
+      paidAmount = totalFee;
+      status = "Paid";
+      paymentHistory.push({
+        id: `pay-seed-${ms.id}`,
+        amount: totalFee,
+        paymentDate: "2026-06-05",
+        paymentMode: "UPI" as const,
+        receiptNumber: `RCP2026S0${idx + 5}`,
+        receivedBy: "Sanjay Gupta"
+      });
+    } else if (idx % 3 === 1) {
+      paidAmount = Math.floor(totalFee / 2);
+      status = "Partial";
+      paymentHistory.push({
+        id: `pay-seed-${ms.id}`,
+        amount: paidAmount,
+        paymentDate: "2026-06-10",
+        paymentMode: "Cash" as const,
+        receiptNumber: `RCP2026S0${idx + 5}`,
+        receivedBy: "Sanjay Gupta"
+      });
+    }
+
+    seed.fees.push({
+      id: `fee-seed-${ms.id}`,
+      studentId: ms.id,
+      academicYear: "2026-27",
+      term: "Term 1" as const,
+      baseFee,
+      transportFee,
+      daycareFee: 0,
+      discount,
+      lateFee: 0,
+      paidAmount,
+      status,
+      paymentHistory
+    });
+
+    // Generate Attendance Records for June 25th & 26th
+    const teacherName = ms.classId === "class-1" ? "Ms. Sarah Jenkins" : "Mrs. Meera Patel";
+    seed.attendance.push({
+      id: `att-seed-${ms.id}-1`,
+      date: "2026-06-25",
+      studentId: ms.id,
+      status: Math.random() > 0.05 ? "Present" : "Leave",
+      markedBy: teacherName,
+      behaviour: "Good",
+      health: "Healthy"
+    });
+    seed.attendance.push({
+      id: `att-seed-${ms.id}-2`,
+      date: "2026-06-26",
+      studentId: ms.id,
+      status: Math.random() > 0.1 ? "Present" : "Leave",
+      markedBy: teacherName,
+      behaviour: "Excellent",
+      health: "Healthy"
+    });
+  });
 
   fs.writeFileSync(DB_FILE, JSON.stringify(seed, null, 2), "utf-8");
   return seed;
