@@ -7,7 +7,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 const PORT = Number(process.env.PORT) || 3000;
 const DB_FILE = path.join(process.cwd(), "db.json");
 
-// Helper to initialize Gemini client lazily
+// Helper to initialize the diagnostics client lazily
 let aiClient: any = null;
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -1375,7 +1375,7 @@ app.put("/api/settings", (req, res) => {
   res.json(db.settings);
 });
 
-// Gemini AI Student Report Generator!
+// AI Student Report Generator!
 app.post("/api/ai/analyze-student", async (req, res) => {
   const { studentId } = req.body;
   if (!studentId) {
@@ -1395,7 +1395,7 @@ app.post("/api/ai/analyze-student", async (req, res) => {
   if (!client) {
     // If no API key, return generated mock AI insights that look fully complete and realistic
     // so the app stays functional, while reporting in a sub-note that this is offline mode.
-    console.log("No Gemini API key found, generating high-quality local insights");
+    console.log("No API key found, generating high-quality local insights");
     const offlineReport = {
       summary: `${student.name} is a delightful and cooperative student in Class ${studentClass?.name || "Play Group"}. They communicate very effectively for their age and engage in block sorting, singing, and physical play with intense focus.`,
       strengths: ["Strong expressive language abilities", "Cooperates eagerly with peers in tidy-up activities", "Keen motor grip during hand painting and coloring"],
@@ -1488,7 +1488,7 @@ Do not include any Markdown blocks, backticks (such as \`\`\`json), or additiona
 
     return res.json(parsed);
   } catch (err: any) {
-    console.error("Gemini AI API generation failed:", err);
+    console.error("AI API generation failed:", err);
     return res.status(500).json({ error: "Failed to generate AI insights: " + err.message });
   }
 });

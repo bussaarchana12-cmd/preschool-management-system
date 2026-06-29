@@ -12,7 +12,7 @@ const LOADING_STEPS = [
   "Running cognitive milestone comparative analysis...",
   "Structuring behavioral and attendance historical trends...",
   "Formulating personalized learning strategies...",
-  "Generating parent meeting recommendations with Gemini AI...",
+  "Generating parent meeting recommendations with AI diagnostics...",
   "Wrapping up child development profile..."
 ];
 
@@ -59,7 +59,7 @@ export default function AIInsights({ student, onUpdateStudent }: AIInsightsProps
       onUpdateStudent(updatedStudent);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "An unexpected error occurred while calling the Gemini API.");
+      setError(err.message || "An unexpected error occurred while calling the AI student analytics service.");
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export default function AIInsights({ student, onUpdateStudent }: AIInsightsProps
             <div className="flex items-center gap-1.5">
               <h3 className="font-bold text-slate-900 text-lg font-display">AI Child Growth Analytics</h3>
               <span className="bg-indigo-100 text-indigo-800 text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded-full font-sans">
-                Gemini Active
+                Diagnostics Active
               </span>
             </div>
             <p className="text-xs text-slate-500">
@@ -152,7 +152,7 @@ export default function AIInsights({ student, onUpdateStudent }: AIInsightsProps
               </p>
               {insights.offlineMode && (
                 <p className="text-[10px] text-slate-400 mt-2 font-medium">
-                  * Generated locally in offline diagnostic mode. Provide a valid Gemini API key to activate live analysis.
+                  * Generated locally in offline diagnostic mode. Provide a valid API key to activate live analysis.
                 </p>
               )}
             </div>
@@ -278,7 +278,7 @@ export default function AIInsights({ student, onUpdateStudent }: AIInsightsProps
           <div>
             <h4 className="font-bold text-slate-700 text-sm font-display">No AI insights generated yet</h4>
             <p className="text-xs text-slate-400 max-w-sm mt-1">
-              Click the generate button above to activate Gemini 3.5 AI child development diagnostics.
+              Click the generate button above to activate AI child development diagnostics.
             </p>
           </div>
         </div>

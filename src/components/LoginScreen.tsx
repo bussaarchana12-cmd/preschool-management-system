@@ -134,7 +134,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               A smarter way to manage your preschool.
             </h2>
             <p className="text-xs text-indigo-200/90 mt-2 font-medium leading-relaxed">
-              Experience the international standard student tracking dashboard. Integrated with progress reports, fees ledger, automated queues, and Google Gemini-powered diagnostic summaries.
+              Experience the international standard student tracking dashboard. Integrated with progress reports, fees ledger, automated queues, and AI-powered diagnostic summaries.
             </p>
           </div>
 
